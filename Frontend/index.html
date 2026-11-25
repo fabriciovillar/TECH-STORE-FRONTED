@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TECH-STORE | Venta de Celulares</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+    .container { max-width: 960px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 16px; margin-bottom: 24px; }
+    h1 { margin: 0; color: #38bdf8; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .card { background: #1e293b; padding: 16px; border-radius: 10px; border: 1px solid #334155; }
+    .card h3 { margin: 0 0 8px; font-size: 14px; color: #94a3b8; }
+    .card p { margin: 0; font-size: 24px; font-weight: bold; }
+    .form-box { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 28px; }
+    .form-box h2 { margin-top: 0; font-size: 18px; color: #38bdf8; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #f8fafc; font-size: 14px; }
+    button { background: #0284c7; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { background: #0369a1; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+    .phone { background: #1e293b; border-radius: 10px; padding: 16px; border: 1px solid #334155; }
+    .badge { display: inline-block; background: #0284c7; font-size: 12px; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px; }
+    .price { font-size: 20px; font-weight: bold; color: #4ade80; margin: 10px 0; }
+    .stock { font-size: 13px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TECH-STORE Celulares</h1>
+      <span>Dashboard de Ventas</span>
+    </header>
+
+    <div class="stats">
+      <div class="card"><h3>Modelos Disponibles</h3><p id="total-modelos">0</p></div>
+      <div class="card"><h3>Equipos en Stock</h3><p id="total-stock">0</p></div>
+      <div class="card"><h3>Estado Backend</h3><p style="color:#4ade80;">En línea</p></div>
+    </div>
+
+    <div class="form-box">
+      <h2>Registrar Nuevo Celular</h2>
+      <form id="form-celular" class="form-grid">
+        <input type="text" id="marca" placeholder="Marca (ej. Samsung)" required />
+        <input type="text" id="modelo" placeholder="Modelo (ej. Galaxy A55)" required />
+        <select id="almacenamiento" required>
+          <option value="128GB">128GB</option>
+          <option value="256GB">256GB</option>
+          <option value="512GB">512GB</option>
+          <option value="1TB">1TB</option>
+        </select>
+        <input type="number" id="precio" placeholder="Precio ($)" step="0.01" min="1" required />
+        <input type="number" id="stock" placeholder="Stock" min="1" required />
+        <button type="submit">Agregar Equipo</button>
+      </form>
+    </div>
+
+    <h2>Catálogo de Celulares</h2>
+    <div class="grid" id="catalogo"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:5000/celulares";
+
+    function cargarCatalogo() {
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("total-modelos").textContent = data.length;
+          document.getElementById("total-stock").textContent = data.reduce((acc, item) => acc + item.stock, 0);
+
+          const contenedor = document.getElementById("catalogo");
+          contenedor.innerHTML = "";
+          data.forEach(cel => {
+            contenedor.innerHTML += `
+              <div class="phone">
+                <span class="badge">${cel.marca}</span>
+                <h3>${cel.modelo}</h3>
+                <p class="stock">Capacidad: ${cel.almacenamiento}</p>
+                <p class="price">$${cel.precio.toFixed(2)}</p>
+                <p class="stock">Stock: ${cel.stock} unidades</p>
+              </div>
+            `;
+          });
+        });
+    }
+
+    document.getElementById("form-celular").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const nuevoEquipo = {
+        marca: document.getElementById("marca").value,
+        modelo: document.getElementById("modelo").value,
+        almacenamiento: document.getElementById("almacenamiento").value,
+        precio: parseFloat(document.getElementById("precio").value),
+        stock: parseInt(document.getElementById("stock").value)
+      };
+
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevoEquipo)
+      })
+      .then(res => res.json())
+      .then(() => {
+        this.reset();
+        cargarCatalogo();
+      });
+    });
+
+    cargarCatalogo();
+  </script>
+</body>
+</html>
